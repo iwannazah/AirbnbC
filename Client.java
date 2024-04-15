@@ -1,6 +1,7 @@
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,11 +11,11 @@ import java.util.Scanner;
 
 
 
-public class Booker {
+public class Client {
     private String serverAddress;
     private int serverPort;
 
-    public Booker(String serverAddress, int serverPort) {
+    public Client(String serverAddress, int serverPort) {
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
     }
@@ -223,7 +224,7 @@ public class Booker {
         int serverPort = 8080;
 
         // Create a booker instance
-        Booker booker = new Booker(serverAddress, serverPort);
+        Client booker = new Client(serverAddress, serverPort);
 
         Scanner scanner = new Scanner(System.in);
         String input;
