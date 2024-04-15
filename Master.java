@@ -8,23 +8,28 @@ import java.util.List;
 import java.util.Properties;
 import java.io.FileInputStream;
 
+
 public class Master {
     //Define port numbers for client and worker communication
-    private static final int CLIENT_PORT = 8080;
-    private static final int WORKER_PORT = 9090;
+    private static int CLIENT_PORT;
+    private static int WORKER_PORT;
     private static int numWorkers; //Number of worker nodes
 
     private static List<Socket> workerSockets; //List to store results
     private ServerSocket clientSS; //Server socket for client connection
-    private ServerSocket workerSS; //Server socket for worker connection
+    private static ServerSocket  workerSS; //Server socket for worker connection
+    private Socket workerSocket;
+
 
     //Master constructor
-    public Master(int numWorkers) {
-        this.workerSockets = new ArrayList<>();
-        initializeWorkers(numWorkers);
+    public Master(Socket workerSocket) {
+        //this.workerSockets = new ArrayList<>();
+        this.workerSocket = workerSocket;
+        //initializeWorkers(numWorkers);
         //this.results = new ArrayList<>();
     }
 
+    /*
     //method to initialize worker connections
     private void initializeWorkers(int numWorkers) {
         try {
@@ -39,6 +44,8 @@ public class Master {
             e.printStackTrace();
         }
     }
+    */
+    
 
     public void start() {
         try {
@@ -47,8 +54,8 @@ public class Master {
             System.out.println("Client server started on port" + CLIENT_PORT);
 
             //Start the worker server socket
-            workerSS = new ServerSocket(WORKER_PORT);
-            System.out.println("Worker server started on port" + WORKER_PORT);
+            //workerSS = new ServerSocket(WORKER_PORT);
+            //System.out.println("Worker server started on port" + WORKER_PORT);
 
             while (true) {
                 //accepting a client connection
@@ -118,7 +125,7 @@ public class Master {
     }
 
     private void handleBookRequest(ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
-        //R                 ead booking details from the client
+        //Read booking details from the client
         //Assuming : Booking object
         Booking booking = (Booking) inputStream.readObject();
         //Send the booking details to the appropriate worker for processing
@@ -133,9 +140,42 @@ public class Master {
     }
 
     public static void main(String [] args) {
-        int numWorkers = 5;
-        Master master = new Master(numWorkers);
-        master.start();
+
+        //Extra. Take info from config file.
+        String dir  = System.getProperty("user.dir");
+        try{
+            String configFilePath = dir+"/config.properties";
+            FileInputStream propsInput = new FileInputStream(configFilePath);
+            Properties props = new Properties();
+            props.load(propsInput);
+            numWorkers = Integer.parseInt(props.getProperty("WORKER_NUMBER"));
+            CLIENT_PORT = Integer.parseInt(props.getProperty("CLIENT_PORT"));
+            WORKER_PORT = Integer.parseInt(props.getProperty("WORKER_PORT"));
+            
+
+        }catch(Exception E){
+            E.printStackTrace(System.out);
+        } 
+
+        //Extra.  Create Server Socket for Worker
+        try {
+			workerSS = new ServerSocket( WORKER_PORT);
+            
+            /* Accept the connection for each worker */
+            for(int i=0;i<numWorkers;i++){
+                Socket workerSocket = workerSS.accept();
+                System.out.println("Worker server started on port" + WORKER_PORT);
+                workerSockets.add(workerSocket);
+                Master master = new Master(workerSocket);
+                master.start();
+            }
+			
+        }
+        catch (IOException ioException) {
+            ioException.printStackTrace();
+		}
+        //Master master = new Master(numWorkers);
+        //master.start();
     }
 
 }
